@@ -1,0 +1,216 @@
+---
+title: "phylo"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+#install.packages(c("ape", "ggplot2","BiocManager"))
+#library(BiocManager)
+#BiocManager::install(c("ggtree", 'Biostrings' ))
+
+```
+
+```{r library}
+library(BiocManager)
+library(ggplot2)
+library(treeio)
+library(ggtree)
+
+```
+
+
+
+```{r read BEAST}
+#file <- "C:/Users/eduar/Google Drive/Uni/TFG/Seqs/Named/Trees/annotated.tree"
+file <- "/Users/eduard/Google Drive/Uni/TFG/Seqs/Named/Trees/annotated.tree" #Mac
+beast_tree <- read.beast(file)
+#as.phylo(beast_tree)
+#get.fields(beast_tree)
+#get.data(beast_tree)
+
+beast_tree@data$Lineage[is.na(beast_tree@data$Lineage)] <- 'NO'
+tree0 <- ggtree(beast_tree)
+d <- tree0$data
+d <- d[!d$isTip,]
+d$label <- round(as.numeric(d$posterior),2)
+d <- d[d$label > 0.50,]
+```
+
+```{r NODES}
+
+du.node <- MRCA(beast_tree, c("DU_LT617551", "DU_LT617553")) #DUERO
+da.node <- MRCA(beast_tree, c("DA_KF985732", "DA_FJ608998")) #DANUBIAN
+ad.node <- MRCA(beast_tree, c("AD_LT617529", "AD_LT617522")) #ADRIATIC
+ma.node <- MRCA(beast_tree, c("MA_LT617576", "MA_LT617574")) #MARMORATUS
+ti.node <- MRCA(beast_tree, c("TU_LT617587", "TU_LT617585")) #TIGRIS
+me.node <- MRCA(beast_tree, c("ME_LT617583", "ME_LT617579")) #MEDITERRANEAN
+dd.node <- MRCA(beast_tree, c("DD_LT617545", "DD_LT617543")) #DADES
+at.node <- MRCA(beast_tree, c("AT_KF985738", "AT_MN528759")) #ATLANTIC
+na.node <- MRCA(beast_tree, c("NA_LT617562", "NA_LT617563")) #NORTH-AFRICA
+ohr.node <- MRCA(beast_tree, c("Ohr_AF053590", "Ohr_JX960764")) #Ohridanus
+sal.node <- MRCA(beast_tree, c("SAL_JX960834", "SAL_AF053591"))
+```
+
+```{r Tips Labels}
+
+tiplab <- beast_tree@phylo$tip.label
+da.lab <- tiplab[grep("^DA", tiplab)]
+ad.lab <- tiplab[grep("^AD", tiplab)]
+ma.lab <- tiplab[grep("^MA", tiplab)]
+ti.lab <- tiplab[grep("^TU", tiplab)]
+me.lab <- tiplab[grep("^ME", tiplab)]
+dd.lab <- tiplab[grep("^DD", tiplab)]
+at.lab <- tiplab[grep("^AT", tiplab)]
+na.lab <- tiplab[grep("^NA", tiplab)]
+ohr.lab <- tiplab[grep("^Ohr", tiplab)]
+sal.lab <- tiplab[grep("^SAL", tiplab)]
+```
+
+```{r TREE}
+
+tree <- ggtree(beast_tree, aes(color = Lineage)) + theme_tree() + 
+  geom_tiplab(size=1.5, color="black") +
+  geom_rootedge(.001) +
+  geom_cladelabel(node = 344, label = 'Duero Lineage', color = '#FF6362', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = da.node, label = 'Danubian Lineage', color = '#F5B400', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = ad.node, label = 'Adriatic Lineage', color = '#DC4437', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = ma.node, label = 'Marmoratus Lineage', color = '#58508D', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = ti.node, label = 'Tigris Lineage', color = '#86D112', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = me.node, label = 'Mediterranean Lineage', color = '#C67ECA', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = dd.node, label = 'Dades Lineage', color = '#4385F5', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = at.node, label = 'Atlantic Lineage', color = '#109D59', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_cladelabel(node = na.node, label = 'North-African Lineage', color = '#0154A4', align = T, offset.text = .001, offset = 0.004, barsize = 1.5) +
+  geom_text2(data=d, aes(label=label, subset = node %in% c(183)), hjust = -0.3, color = 'black', size = 3) + #DA+AD 0.09
+  geom_text2(data=d, aes(label=label, subset = node %in% c(177, 178, 179, 180, 181, 182, 184, 196, 255, 267, 268)), hjust = 1.15, vjust = -0.5, color = 'black', size = 3) +
+  geom_text2(data=d, aes(label=label, subset = node %in% c(248)), hjust = -0.15, vjust = 0.2, color = 'black', size = 3) +
+  scale_colour_manual(values = c('#DC4437', '#109D59', '#F5B400', '#4385F5', '#FF8483', '#58508D',
+                                 '#C67ECA', '#0154A4', '#3B3B3B' ,'#86D112'), 
+                      breaks = c("AD Lineage", 'AT Lineage', 'DA Lineage', 'DD Lineage',
+                                 'DU Lineage', 'MA Lineage', 'ME Lineage', 'NA Lineage',
+                                 'TI Lineage') ) +
+  theme(legend.title = element_text(colour = 'black', size = 10, face='bold'), legend.position = 'bottom', 
+      legend.box = 'horizontal') +
+  xlim_tree(0.04)
+tree
+```
+
+```{r}
+tree3 <- ggtree(beast_tree, aes(color = Lineage)) + theme_tree() + 
+  geom_tiplab(size=1.5, color="black") +
+  geom_rootedge(-.001) +
+  scale_colour_manual(values = c('#DC4437', '#109D59', '#F5B400', '#4385F5', '#FF8483', '#58508D', '#C67ECA', '#0154A4', '#3B3B3B' ,'#86D112'), breaks = c("AD Lineage", 'AT Lineage', 'DA Lineage', 'DD Lineage', 'DU Lineage', 'MA Lineage', 'ME Lineage', 'NA Lineage', 'TI Lineage')) +
+  theme(legend.title = element_text(colour = 'black', size = 10, face='bold'), legend.position = 'bottom', 
+        legend.box = 'horizontal') +
+  xlim_tree(0.04)
+
+tree3 <- collapse(tree3, node = da.node)
+tree3 <- collapse(tree3, node = ad.node)
+tree3 <- collapse(tree3, node = ma.node)
+tree3 <- collapse(tree3, node = ti.node)
+tree3 <- collapse(tree3, node = me.node)
+tree3 <- collapse(tree3, node = dd.node)
+tree3 <- collapse(tree3, node = at.node)
+tree3 <- collapse(tree3, node = na.node)
+tree3 <- collapse(tree3, node = du.node)
+tree3 <- collapse(tree3, node = ohr.node)
+tree3 <- collapse(tree3, node = sal.node)
+
+font3 <- 6
+
+tree3 <- tree3 + 
+  geom_cladelabel(node = da.node, label = 'Danubian Lineage', color = '#F5B400', align = T, offset.text = 0, offset = -.002, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = ad.node, label = 'Adriatic Lineage', color = '#DC4437', align = T, offset.text = 0, offset = -0.002, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = ma.node, label = 'Marmoratus Lineage', color = '#58508D', align = T, offset.text = 0, offset = -.001, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = ti.node, label = 'Tigris Lineage', color = '#86D112', align = T, offset.text = 0, offset = -.002, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = me.node, label = 'Mediterranean Lineage', color = '#C67ECA', align = T, offset.text = 0, offset = 0, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = dd.node, label = 'Dades Lineage', color = '#4385F5', align = T, offset.text = 0, offset = 0, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = at.node, label = 'Atlantic Lineage', color = '#109D59', align = T, offset.text = 0, offset = -.002, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = na.node, label = 'North-African Lineage', color = '#0154A4', align = T, offset.text = 0, offset = -.0015, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = du.node, label = 'Duero Lineage', color = '#FF6362', align = T, offset.text = 0, offset = -.0005, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = ohr.node, label = 'S.ohridanus', color = '#3B3B3B', align = T, offset.text = 0, offset = -.001, barsize = 1.5, fontsize = font3) +
+  geom_cladelabel(node = sal.node, label = 'S.salar', color = '#3B3B3B', align = T, offset.text = 0, offset = -.003, barsize = 1.5, fontsize = font3) 
+
+
+
+tree3
+
+```
+
+```{r}
+
+c <- tree3$data
+c <- c[!c$isTip,]
+c$label <- round(as.numeric(c$posterior),2)
+c <- c[c$label > 0.50,]
+
+tree3 +
+  geom_text2(data=c, aes(label=label, subset =(node==183)), hjust = -0.3, color = 'black', size = 3) +
+  geom_text2(data=c, aes(label=label, subset =(node==248)), hjust = -0.15, vjust = 0.2, color = 'black', size = 3) 
+
+#DA+AD 0.09
+ # geom_text2(data=d, aes(label=label, subset = node %in% c(177, 178, 179, 180, 181, 182, 184, 196, 255, 267, 268)), hjust = 1.15, vjust = -0.5, color = 'black', size = 3) +
+
+
+
+```
+
+
+```{r Circular Tree}
+library(extrafont)
+beast_tree2 <- beast_tree
+tree2 <- ggtree(beast_tree, layout = 'circular', branch.length = 'none')
+
+e <- tree2$data
+e <- e[!e$isTip,]
+e$label <- round(as.numeric(e$posterior),2)
+e <- e[e$label > 0.50,]
+
+
+tree2 <- ggtree(beast_tree, aes(color = Lineage), layout = 'circular', branch.length = 'none') +
+  geom_tiplab(size=2.75, color="black") + 
+  geom_cladelabel(node = 344, label = 'Duero Lineage', color = '#FF6362',
+                  align = T, hjust = 'centre', offset.text = 1, offset = 4, barsize = 1.5,
+                  angle = -69, family = 'Times New Roman') +
+  geom_cladelabel(node = da.node, label = 'Danubian Lineage', color = '#F5B400', 
+                  align = T, hjust = 'centre', offset.text = 1, offset = 4, barsize = 1.5,
+                  angle = 30, family = 'Times New Roman') +
+  geom_cladelabel(node = ad.node, label = 'Adriatic Lineage', color = '#DC4437', 
+                  align = T, hjust = 'centre', offset.text = 1, offset = 4, barsize = 1.5,
+                  angle = -30, family = 'Times New Roman') +
+  geom_cladelabel(node = ma.node, label = 'Marmoratus Lineage', color = '#58508D', 
+                  align = T, hjust = 'centre', offset.text = 0.75, offset = 4, barsize = 1.5,
+                  angle = -48, family = 'Times New Roman') +
+  geom_cladelabel(node = ti.node, label = 'Tigris Lineage', color = '#86D112', 
+                  align = T, hjust = 'centre', offset.text = 2, offset = 4, barsize = 1.5,
+                  angle = -57, family = 'Times New Roman') +
+  geom_cladelabel(node = me.node, label = 'Mediterranean Lineage', color = '#C67ECA', 
+                  align = T, hjust = 'centre', offset.text = 0.5, offset = 4, barsize = 1.5,
+                  angle = -69, family = 'Times New Roman') +
+  geom_cladelabel(node = dd.node, label = 'Dades Lineage', color = '#4385F5', 
+                  align = T, hjust = 'centre', offset.text = 1.75, offset = 4, barsize = 1.5,
+                  angle = -80, family = 'Times New Roman') +
+  geom_cladelabel(node = at.node, label = 'Atlantic Lineage', color = '#109D59', 
+                  align = T, hjust = 'centre', offset.text = 1, offset = 4, barsize = 1.5,
+                  angle = 30, family = 'Times New Roman') +
+  geom_cladelabel(node = na.node, label = 'North-African Lineage', color = '#0154A4', 
+                  align = T, hjust = 'centre', offset.text = 1, offset = 4, barsize = 1.5,
+                  angle = -47, family =  'Times New Roman') +
+  geom_text2(data=e, aes(label=label, subset = node %in% 
+                           c(183)), hjust = -0.3, color = 'black', size = 3,inherit.aes = TRUE) + #DA+AD 0.09
+  
+  geom_text2(data=e, aes(label=label, subset = node %in% 
+                           c(177, 178, 179, 180, 181, 182, 184, 196, 255, 267, 268)), color = 'black', size = 3) +
+  
+  geom_text2(data=e, aes(label=label, subset = node %in% c(248)), color = 'black', size = 3) +
+  scale_colour_manual(values = c('#DC4437', '#109D59', '#F5B400', '#4385F5', '#FF8483', '#58508D',
+                                 '#C67ECA', '#0154A4', '#3B3B3B' ,'#86D112'), 
+                      breaks = c("AD Lineage", 'AT Lineage', 'DA Lineage', 'DD Lineage',
+                                 'DU Lineage', 'MA Lineage', 'ME Lineage', 'NA Lineage',
+                                 'TI Lineage') ) +
+  theme(legend.title = element_text(colour = 'black', size = 10, face='bold'), legend.position = 'bottom', 
+        legend.box = 'horizontal') 
+
+tree2
+
+```
